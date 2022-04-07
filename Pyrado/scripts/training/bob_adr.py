@@ -30,6 +30,9 @@
 Train agents to solve the Ball-on-Beam environment using Stein Variational Policy Gradient.
 """
 import torch as to
+import sys
+sys.path.append("/Users/4paradigm/workspace/SimuRLacra/Pyrado")
+print(sys.path)
 
 import pyrado
 from pyrado.algorithms.meta.adr import ADR
@@ -70,7 +73,7 @@ if __name__ == "__main__":
 
     # Algorithm
     adr_hparam = dict(
-        svpg_particle_hparam=svpg_hparams,
+        svpg_hp=svpg_hparams,
         max_iter=200,
     )
 

@@ -121,7 +121,7 @@ if __name__ == "__main__":
             stop_after_epochs=20,  # default: 20
             discard_prior_samples=False,  # default: False
             use_combined_loss=False,  # default: False
-            retrain_from_scratch_each_round=False,  # default: False
+            #retrain_from_scratch_each_round=False,  # default: False
             show_train_summary=False,  # default: False
         ),
         subrtn_sbi_sampling_hparam=dict(sample_with_mcmc=True),
