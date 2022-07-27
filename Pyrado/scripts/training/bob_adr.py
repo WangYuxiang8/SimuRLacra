@@ -31,8 +31,8 @@ Train agents to solve the Ball-on-Beam environment using Stein Variational Polic
 """
 import torch as to
 import sys
-sys.path.append("/Users/4paradigm/workspace/SimuRLacra/Pyrado")
-print(sys.path)
+# sys.path.append("/Users/4paradigm/workspace/SimuRLacra/Pyrado")
+# print(sys.path)
 
 import pyrado
 from pyrado.algorithms.meta.adr import ADR

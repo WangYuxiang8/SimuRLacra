@@ -555,7 +555,8 @@ class SBIBase(InterruptableAlgorithm, ABC):
 
         # Sample domain parameters from the posterior
         domain_params = to.stack(
-            [posterior.sample((num_samples,), x=x_o, **subrtn_sbi_sampling_hparam) for x_o in data_real],
+            #[posterior.sample((num_samples,), x=x_o, **subrtn_sbi_sampling_hparam) for x_o in data_real],
+            [posterior.sample((num_samples,), x=x_o) for x_o in data_real],
             dim=0,
         )
 

@@ -67,6 +67,7 @@ class TwoDimGaussian(SimEnv, Serializable):
         self._domain_param = self.get_nominal_domain_param()
         self._mean, self._covariance_matrix = TwoDimGaussian.calc_constants(self.domain_param)
 
+        # 8维状态空间
         self._init_space = SingularStateSpace(np.zeros(self.state_space.shape))
 
         # Define a dummy task including the reward function
@@ -119,6 +120,7 @@ class TwoDimGaussian(SimEnv, Serializable):
 
     def _create_task(self, task_args: dict = None) -> OptimProxyTask:
         # Dummy task
+        # 这是假的任务，输入任何观测只会输出0奖赏
         return OptimProxyTask(self.spec, StateBasedRewFcn(lambda x: 0.0))
 
     @property
@@ -138,11 +140,20 @@ class TwoDimGaussian(SimEnv, Serializable):
 
     @classmethod
     def get_nominal_domain_param(cls) -> dict:
-        return dict(
+        """
+        param = dict(
             m_1=0.7,  # first mean
             m_2=-1.5,  # second mean
             s_1=-1,  # first std, also used for coupling term
             s_2=-0.9,  # second std, also used for coupling term
+            rho=0.6,  # scaling factor
+        )
+        """
+        return dict(
+            m_1=-1,  # first mean
+            m_2=1,  # second mean
+            s_1=1,  # first std, also used for coupling term
+            s_2=1,  # second std, also used for coupling term
             rho=0.6,  # scaling factor
         )
 
@@ -157,6 +168,8 @@ class TwoDimGaussian(SimEnv, Serializable):
             self.domain_param = domain_param
             self._mean, self._covariance_matrix = TwoDimGaussian.calc_constants(self.domain_param)
 
+        # 二维高斯分布，生成4组样本，每组样本有两个值，表示该二维高斯分布采样得到的值
+        # flatten之后是8个值，正好对应状态维度
         self.state = np.random.multivariate_normal(self._mean, self._covariance_matrix, size=4).flatten()
 
         # Reset time
@@ -166,9 +179,12 @@ class TwoDimGaussian(SimEnv, Serializable):
         return self.observe(self.state)
 
     def step(self, act: np.ndarray = None) -> tuple:
+        # 这里的动作是假的，对环境没有任何影响
+        # 这个任务不在乎学到的策略，只是为了推断环境参数
+
         # Draw 4 samples from the 2-dim complex posterior
-        # self.state = np.random.multivariate_normal(self._mean, self._covariance_matrix, size=4).flatten()
-        self.state = self.init_space.sample_uniform()
+        self.state = np.random.multivariate_normal(self._mean, self._covariance_matrix, size=4).flatten()
+        # self.state = self.init_space.sample_uniform()
 
         # Current reward depending on the state after the step (since there is only one step)
         self._curr_rew = self.task.step_rew(self.state)

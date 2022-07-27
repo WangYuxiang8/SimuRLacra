@@ -109,7 +109,7 @@ class HalfCheetahSim(MujocoSimEnv, Serializable):
         return dict(
             reset_noise_halfspan=0.0,  # fixed initial state by default
             total_mass=14,
-            tangential_friction_coeff=0.4,
+            tangential_friction_coeff=0.4,  #
             torsional_friction_coeff=0.1,
             rolling_friction_coeff=0.1,
         )

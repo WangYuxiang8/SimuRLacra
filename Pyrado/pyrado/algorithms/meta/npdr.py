@@ -100,6 +100,9 @@ class NPDR(SBIBase):
             self.reached_checkpoint()  # setting counter to 0
 
         if self.curr_checkpoint == 0:
+            # 获取真实数据，如果存在就直接load；否则调用接口去跑真实数据，并把它存起来。
+            # 初始化环境和先验
+
             # Check if the rollout files already exist
             if (
                 osp.isfile(osp.join(self._save_dir, f"iter_{self.curr_iter}_data_real.pt"))
@@ -158,6 +161,7 @@ class NPDR(SBIBase):
             self.reached_checkpoint()  # setting counter to 1
 
         if self.curr_checkpoint == 1:
+            # sbi序列训练，每次将上次的后验作为一个'建议'赋给下一轮的先验
             # Instantiate the sbi subroutine to retrain from scratch each iteration
             if self.reset_sbi_routine_each_iter:
                 self._initialize_subrtn_sbi(subrtn_sbi_class=self._subrtn_sbi_class)

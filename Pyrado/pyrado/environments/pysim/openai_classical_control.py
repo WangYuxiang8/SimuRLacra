@@ -39,6 +39,7 @@ from pyrado.spaces.base import Space
 from pyrado.spaces.box import BoxSpace
 from pyrado.spaces.discrete import DiscreteSpace
 from pyrado.utils.data_types import RenderMode
+from pyrado.environments.pysim.vessel_nn import VesselEnvNN
 
 
 def _to_pyrado_space(gym_space) -> [BoxSpace, DiscreteSpace]:
@@ -65,7 +66,7 @@ class GymEnv(SimEnv, Serializable):
 
     name: str = "gym-cc"
 
-    def __init__(self, env_name: str):
+    def __init__(self, env_name: str, continuous=False):
         """
         Constructor
 
@@ -91,12 +92,19 @@ class GymEnv(SimEnv, Serializable):
             dt = 0.05
         elif env_name == "LunarLander-v2":
             dt = 0.02
+        elif env_name == "vessel":
+            dt = 0.02
         else:
             raise NotImplementedError(f"GymEnv does not wrap the environment {env_name}.")
         super().__init__(dt)
 
         # Create the gym environment
-        self._gym_env = gym.envs.make(env_name)
+        if env_name == "LunarLander-v2":
+            self._gym_env = gym.envs.make(env_name)
+        elif env_name == "vessel":
+            self._gym_env = VesselEnvNN()
+        else:
+            self._gym_env = gym.envs.make(env_name)
 
         # Set the maximum number of time steps to 1000 if not given by the gym env
         self.max_steps = getattr(self._gym_env.spec, "max_episode_steps", 1000)

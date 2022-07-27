@@ -31,7 +31,7 @@ Test predefined energy-based swing-up controller on the Quanser Qube with observ
 """
 
 import pyrado
-from pyrado.environments.mujoco.quanser_qube import QQubeStabMjSim, QQubeSwingUpMjSim
+#from pyrado.environments.mujoco.quanser_qube import QQubeStabMjSim, QQubeSwingUpMjSim
 from pyrado.environments.pysim.quanser_qube import QQubeStabSim, QQubeSwingUpSim
 from pyrado.policies.special.environment_specific import QQubeSwingUpAndBalanceCtrl
 from pyrado.sampling.rollout import after_rollout_query, rollout
@@ -48,12 +48,12 @@ if __name__ == "__main__":
     max_steps = 3500
     if args.env_name == "qq-su":
         env = QQubeSwingUpSim(dt=dt, max_steps=max_steps)
-    elif args.env_name == "qq-mj-su":
-        env = QQubeSwingUpMjSim(dt=dt, max_steps=max_steps)
+    #elif args.env_name == "qq-mj-su":
+        #env = QQubeSwingUpMjSim(dt=dt, max_steps=max_steps)
     elif args.env_name == "qq-st":
         env = QQubeStabSim(dt=dt, max_steps=max_steps)
-    elif args.env_name == "qq-mj-st":
-        env = QQubeStabMjSim(dt=dt, max_steps=max_steps)
+    #elif args.env_name == "qq-mj-st":
+        #env = QQubeStabMjSim(dt=dt, max_steps=max_steps)
     else:
         raise pyrado.ValueErr(
             given_name="--env_name",

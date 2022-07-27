@@ -56,20 +56,21 @@ if __name__ == "__main__":
         raise pyrado.ValueErr(given=args.num_samples, ge_constraint="1")
 
     # NPDR
-    ex_dir_npdr = os.path.join(pyrado.TEMP_DIR, "mg-ik", "npdr_time", "")
+    # ex_dir_npdr = os.path.join(pyrado.TEMP_DIR, "mg-ik", "npdr_time", "")
+    ex_dir_npdr = os.path.join(pyrado.TEMP_DIR, "qcp-su", "npdr_qq-sub", "2022-04-08_22-38-01--numsegs-20")
     algo = pyrado.load("algo.pkl", ex_dir_npdr)
     if not isinstance(algo, NPDR):
         raise pyrado.TypeErr(given=algo, expected_type=NPDR)
     env_sim = inner_env(pyrado.load("env_sim.pkl", ex_dir_npdr))
     prior_npdr = pyrado.load("prior.pt", ex_dir_npdr)
-    posterior_npdr = SBIBase.load_posterior(ex_dir_npdr, idx_iter=0, idx_round=6, obj=None, verbose=True)  # CHOICE
+    posterior_npdr = SBIBase.load_posterior(ex_dir_npdr, idx_iter=0, idx_round=1, obj=None, verbose=True)  # CHOICE
     data_real_npdr = pyrado.load(f"data_real.pt", ex_dir_npdr, prefix="iter_0", verbose=True)  # CHOICE
     domain_params_npdr, log_probs = SBIBase.eval_posterior(
         posterior_npdr,
         data_real_npdr,
         args.num_samples,
-        normalize_posterior=False,  # not necessary here
-        subrtn_sbi_sampling_hparam=dict(sample_with_mcmc=args.use_mcmc),
+        normalize_posterior=False  # not necessary here
+        #subrtn_sbi_sampling_hparam=dict(sample_with_mcmc=args.use_mcmc),
     )
     domain_params_posterior_npdr = domain_params_npdr.reshape(1, -1, domain_params_npdr.shape[-1]).squeeze()
 

@@ -69,10 +69,12 @@ if __name__ == "__main__":
     ex_dir = setup_experiment(TwoDimGaussian.name, NPDR.name, f"observation_{args.condition}")
 
     # load and save the
+    # shape -> Tensor: (10000, 5)
     reference_posterior_samples = pyrado.load(
         f"reference_posterior_samples_{args.condition}.pt",
         osp.join(pyrado.EVAL_DIR, "2dg", f"observation_{args.condition}"),
     )
+    # tensor([-2.8581, -0.4445,  2.9473,  1.2396,  2.9713])
     true_param = pyrado.load(
         f"true_parameters_{args.condition}.pt", osp.join(pyrado.EVAL_DIR, "2dg", f"observation_{args.condition}")
     )
@@ -86,6 +88,7 @@ if __name__ == "__main__":
     env_sim = TwoDimGaussian()
     env_real = osp.join(pyrado.EVAL_DIR, "2dg", f"observation_{args.condition}")
 
+    # 什么都不做的策略
     # Behavioral policy
     policy = IdlePolicy(env_sim.spec)
 
@@ -93,6 +96,8 @@ if __name__ == "__main__":
     prior_hparam = dict(low=-3 * to.ones((5,)), high=3 * to.ones((5,)))
     prior = sbiutils.BoxUniform(**prior_hparam)
 
+    # 将st+at作为环境输出的一个样本，将其转为一个embedding，长度是固定的。
+    # 然后再将embedding传入后验，或进行推断。
     # Embedding
     embedding = LastStepEmbedding(env_sim.spec, RolloutSamplerForSBI.get_dim_data(env_sim.spec))
 
@@ -124,7 +129,8 @@ if __name__ == "__main__":
             #retrain_from_scratch_each_round=False,  # default: False
             show_train_summary=False,  # default: False
         ),
-        subrtn_sbi_sampling_hparam=dict(sample_with_mcmc=True),
+        #subrtn_sbi_sampling_hparam=dict(sample_with_mcmc=True),
+        #subrtn_sbi_sampling_hparam=dict(sample_with = "mcmc"),
         num_workers=1,
     )
 
