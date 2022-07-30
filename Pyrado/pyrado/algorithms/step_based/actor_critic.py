@@ -75,6 +75,7 @@ class ActorCritic(Algorithm, ABC):
         # Initialize
         self._expl_strat = None  # must be implemented by subclass
         self._sampler = None  # must be implemented by subclass
+        self._eval_sampler = None   # must be implemented by subclass
         self._lr_scheduler = None
         self._lr_scheduler_hparam = None
 
@@ -104,9 +105,20 @@ class ActorCritic(Algorithm, ABC):
             raise pyrado.TypeErr(given=sampler, expected_type=(ParallelRolloutSampler, CVaRSampler))
         self._sampler = sampler
 
+    @property
+    def eval_sampler(self) -> ParallelRolloutSampler:
+        return self._eval_sampler
+
+    @eval_sampler.setter
+    def eval_sampler(self, sampler: ParallelRolloutSampler):
+        if not isinstance(sampler, (ParallelRolloutSampler, CVaRSampler)):
+            raise pyrado.TypeErr(given=sampler, expected_type=(ParallelRolloutSampler, CVaRSampler))
+        self._eval_sampler = sampler
+
     def step(self, snapshot_mode: str, meta_info: dict = None):
         # Sample rollouts
         ros = self.sampler.sample()
+        eval_ros = self.eval_sampler.sample()
 
         # Log metrics computed from the old policy (before the update)
         all_lengths = np.array([ro.length for ro in ros])
@@ -119,6 +131,8 @@ class ActorCritic(Algorithm, ABC):
         self.logger.add_value("std return", np.std(rets), 4)
         self.logger.add_value("avg rollout len", np.mean(all_lengths), 4)
         self.logger.add_value("num total samples", self._cnt_samples)
+        eval_rets = np.asarray([ro.undiscounted_return() for ro in eval_ros])
+        self.logger.add_value("eval avg return", np.mean(eval_rets), 4)
 
         # Save snapshot data
         self.make_snapshot(snapshot_mode, float(np.mean(rets)), meta_info)

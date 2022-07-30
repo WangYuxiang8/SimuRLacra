@@ -65,6 +65,7 @@ class PPO(ActorCritic):
         self,
         save_dir: pyrado.PathLike,
         env: Env,
+        eval_env: Env,
         policy: Policy,
         critic: GAE,
         max_iter: int,
@@ -86,6 +87,7 @@ class PPO(ActorCritic):
 
         :param save_dir: directory to save the snapshots i.e. the results in
         :param env: the environment which the policy operates
+        :param eval_env: the environment which the policy operates to evaluate
         :param policy: policy to be updated
         :param critic: advantage estimation function $A(s,a) = Q(s,a) - V(s)$
         :param max_iter: maximum number of iterations (i.e. policy updates) that this algorithm runs
@@ -125,6 +127,9 @@ class PPO(ActorCritic):
         self._expl_strat = NormalActNoiseExplStrat(self._policy, std_init=std_init)
         self._sampler = ParallelRolloutSampler(
             env, self._expl_strat, num_workers=num_workers, min_steps=min_steps, min_rollouts=min_rollouts
+        )
+        self._eval_sampler = ParallelRolloutSampler(
+            eval_env, self._expl_strat, num_workers=num_workers, min_steps=min_steps, min_rollouts=min_rollouts
         )
         self.optim = to.optim.Adam(
             [{"params": self._expl_strat.policy.parameters()}, {"params": self._expl_strat.noise.parameters()}],

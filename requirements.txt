@@ -28,3 +28,5 @@ sphinx_rtd_theme
 tabulate
 tensorboard
 tqdm
+torch
+sbi

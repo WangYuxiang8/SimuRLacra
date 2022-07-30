@@ -257,6 +257,7 @@ class NPDR(SBIBase):
                 obj=self._policy,
             )
             # Policy optimization
+            # 这里是训练智能体策略
             if self._subrtn_policy is not None:
                 # Train the behavioral policy using the posterior samples obtained before.
                 # Repeat the training if the resulting policy did not exceed the success threshold.

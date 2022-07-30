@@ -132,6 +132,17 @@ class MetaDomainRandWrapper(DomainRandWrapper, Serializable):
             self._wrapped_env.randomizer.adapt_one_distr_param(dp_name, ddp_name, value)
 
 
+class DomainRandWrapperLiveFake(DomainRandWrapper, Serializable):
+    """
+    Domain randomization wrapper which randomized the wrapped env at every reset.
+    Thus every rollout is done with different domain parameters.
+    """
+
+    def reset(self, init_state: np.ndarray = None, domain_param: dict = None) -> np.ndarray:
+        # Forward to EnvWrapper, which delegates to self._wrapped_env
+        return super().reset(init_state=init_state, domain_param=domain_param)
+
+
 class DomainRandWrapperLive(DomainRandWrapper, Serializable):
     """
     Domain randomization wrapper which randomized the wrapped env at every reset.

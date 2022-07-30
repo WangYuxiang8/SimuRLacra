@@ -93,3 +93,12 @@ MUJOCO_LOG.*
 ### sbi-logs
 Pyrado/sbi-logs/
 Pyrado/tests/sbi-logs/
+
+### customer
+Pyrado/training_me/2dg
+Pyrado/training_me/archery
+Pyrado/training_me/half_cheetah
+Pyrado/training_me/lunar_lander
+Pyrado/training_me/qcp-su
+Pyrado/training_me/sbi-logs
+Pyrado/training_me/vessel

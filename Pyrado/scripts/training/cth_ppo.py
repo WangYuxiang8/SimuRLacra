@@ -31,13 +31,15 @@ Train an agent to solve the Half-Cheetah environment using Proximal Policy Optim
 """
 import torch as to
 from torch.optim import lr_scheduler
+from copy import deepcopy
 
 import pyrado
 from pyrado.algorithms.step_based.gae import GAE
 from pyrado.algorithms.step_based.ppo import PPO
 from pyrado.domain_randomization.domain_parameter import NormalDomainParam
 from pyrado.domain_randomization.domain_randomizer import DomainRandomizer
-from pyrado.environment_wrappers.domain_randomization import DomainRandWrapperLive
+from pyrado.domain_randomization.default_randomizers import create_default_randomizer
+from pyrado.environment_wrappers.domain_randomization import DomainRandWrapperLive, DomainRandWrapperLiveFake
 from pyrado.environments.mujoco.openai_half_cheetah import HalfCheetahSim
 from pyrado.logger.experiment import save_dicts_to_yaml, setup_experiment
 from pyrado.policies.feed_back.fnn import FNNPolicy
@@ -59,13 +61,18 @@ if __name__ == "__main__":
     # Environment
     env_hparam = dict()
     env = HalfCheetahSim(**env_hparam)
+    eval_env = deepcopy(env)
+    randomizer = create_default_randomizer(eval_env)
+    eval_env = DomainRandWrapperLive(eval_env, randomizer)
 
     # Simple Randomizer
+    """
     dp_nom = HalfCheetahSim.get_nominal_domain_param()
     randomizer = DomainRandomizer(
         NormalDomainParam(name="total_mass", mean=dp_nom["total_mass"], std=dp_nom["total_mass"] / 10, clip_lo=1e-3)
     )
-    env = DomainRandWrapperLive(env, randomizer)
+    env = DomainRandWrapperLiveFake(env, randomizer)
+    """
 
     # Policy
     policy_hparam = dict(hidden_sizes=[64, 64], hidden_nonlin=to.tanh)
@@ -100,7 +107,7 @@ if __name__ == "__main__":
         lr_scheduler_hparam=dict(gamma=0.999),
         num_workers=4,
     )
-    algo = PPO(ex_dir, env, policy, critic, **algo_hparam)
+    algo = PPO(ex_dir, env, eval_env, policy, critic, **algo_hparam)
 
     # Save the hyper-parameters
     save_dicts_to_yaml(
