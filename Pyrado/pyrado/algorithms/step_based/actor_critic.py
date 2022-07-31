@@ -133,8 +133,8 @@ class ActorCritic(Algorithm, ABC):
         self.logger.add_value("num total samples", self._cnt_samples)
         eval_rets = np.asarray([ro.undiscounted_return() for ro in eval_ros])
         self.logger.add_value("eval avg return", np.mean(eval_rets), 4)
-        print("Env params: {0}".format(self.sampler.env.domain_param))
-        print("Eval env params: {0}".format(self.eval_sampler.env.domain_param))
+        #print("Env params: {0}".format(self.sampler.env.domain_param))
+        #print("Eval env params: {0}".format(self.eval_sampler.env.domain_param))
 
         # Save snapshot data
         self.make_snapshot(snapshot_mode, float(np.mean(rets)), meta_info)
