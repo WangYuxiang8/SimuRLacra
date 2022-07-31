@@ -62,8 +62,15 @@ if __name__ == "__main__":
     env_hparam = dict()
     env = HalfCheetahSim(**env_hparam)
     eval_env = deepcopy(env)
-    randomizer = create_default_randomizer(eval_env)
-    eval_env = DomainRandWrapperLive(eval_env, randomizer)
+    dp_nom = eval_env.get_nominal_domain_param()
+    eval_env.domain_param = dict(
+        total_mass=dp_nom["total_mass"] * 1.5,
+        tangential_friction_coeff=dp_nom["tangential_friction_coeff"] * 1.5,
+        torsional_friction_coeff=dp_nom["torsional_friction_coeff"] * 1.5,
+        rolling_friction_coeff=dp_nom["rolling_friction_coeff"] * 1.5
+    )
+    #randomizer = create_default_randomizer(eval_env)
+    #eval_env = DomainRandWrapperLive(eval_env, randomizer)
 
     # Simple Randomizer
     """
