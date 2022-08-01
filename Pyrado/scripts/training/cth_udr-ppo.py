@@ -31,6 +31,7 @@ Train an agent to solve the Half-Cheetah environment using Uniform Domain Random
 """
 import torch as to
 from torch.optim import lr_scheduler
+from copy import deepcopy
 
 import pyrado
 from pyrado.algorithms.meta.udr import UDR
@@ -60,6 +61,14 @@ if __name__ == "__main__":
     # Environment
     env_hparam = dict()
     env = HalfCheetahSim(**env_hparam)
+    eval_env = deepcopy(env)
+    dp_nom = eval_env.get_nominal_domain_param()
+    eval_env.domain_param = dict(
+        total_mass=dp_nom["total_mass"] * 1.5,
+        tangential_friction_coeff=dp_nom["tangential_friction_coeff"] * 1.5,
+        torsional_friction_coeff=dp_nom["torsional_friction_coeff"] * 1.5,
+        rolling_friction_coeff=dp_nom["rolling_friction_coeff"] * 1.5
+    )
     env = ActNormWrapper(env)
 
     randomizer = create_default_randomizer(env)
@@ -99,7 +108,7 @@ if __name__ == "__main__":
         lr_scheduler_hparam=dict(gamma=0.999),
         num_workers=4,
     )
-    subrtn = PPO(ex_dir, env, policy, critic, **subrtn_hparam)
+    subrtn = PPO(ex_dir, env, eval_env, policy, critic, **subrtn_hparam)
 
     # Algorithm
     algo = UDR(env, subrtn)
