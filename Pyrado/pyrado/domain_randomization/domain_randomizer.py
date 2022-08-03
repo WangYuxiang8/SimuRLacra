@@ -28,6 +28,7 @@
 
 from copy import deepcopy
 from typing import Mapping, Optional, Union
+import numpy as np
 
 from tabulate import tabulate
 from torch.distributions.bernoulli import Bernoulli
@@ -273,3 +274,104 @@ class DomainRandomizer:
                 dp.distr = MultivariateNormal(dp.mean, dp.cov)
             if isinstance(dp, BernoulliDomainParam):
                 dp.distr = Bernoulli(dp.prob_1)
+
+
+class SBIRandomizer:
+    """用npdr/snvi的后验去采样"""
+    def __init__(self, ex_dir, params_name: list):
+        posterior = pyrado.load(name="posterior.pt", load_dir=ex_dir)
+        # TODO: 获取目标域的观测
+        self.x_o = pyrado.load(name="true_x.txt", load_dir=ex_dir)
+        self.posterior = posterior.set_default_x(self.x_o)
+        self.posterior.train()
+        self.params_name = params_name
+        self._params_pert_dict = None  # dict of domain params which are a list of tensors with as may eles as samples
+        self._params_pert_list = None  # list of domain param samples which are a dict with a key and one values
+
+    def randomize(self, num_samples: int):
+        samples = self.posterior.sample((num_samples,), x=self.x_o)
+        posterior_samples = np.array(samples)
+
+        # Generate domain parameter samples
+        keys, values = self.params_name, []
+        for i in range(len(self.params_name)):
+            values.append(posterior_samples[:, i])
+
+        # Fill the internal storage containers
+        self._params_pert_dict = dict(zip(keys, values))
+        self._params_pert_list = []
+        for i in range(num_samples):
+            d = dict()
+            for k, v in zip(keys, values):
+                d[k] = v[i]
+            self._params_pert_list.append(d)
+
+    def get_params(self, num_samples: int = -1, fmt: str = "list", dtype: str = "numpy") -> Union[list, dict]:
+        """
+            Get the values in the data frame of the perturbed parameters.
+
+            :param num_samples: number of samples to be extracted from the randomizer
+            :param fmt: format (list of dicts or dict of lists) in which the params should be returned
+            :param dtype: data type in which the params should be returned
+            :return: dict of num_samples perturbed values per specified param or one dict of one perturbed
+        """
+        if not isinstance(num_samples, int):
+            raise pyrado.TypeErr(given=num_samples, expected_type=int)
+        if num_samples <= -2 or num_samples == 0:
+            raise pyrado.ValueErr(msg="The number of samples needs to be -1 or a positive integer!")
+        if not (fmt.lower() == "list" or fmt.lower() == "dict"):
+            raise pyrado.ValueErr(given=fmt, eq_constraint="list or dict")
+        if not (dtype.lower() == "numpy" or dtype.lower() == "torch"):
+            raise pyrado.ValueErr(given=dtype, eq_constraint="numpy or torch")
+
+        copy = None
+
+        if num_samples == -1 and isinstance(self._params_pert_list, list) and len(self._params_pert_list) > 1:
+            # Return all samples that the randomizer holds
+            if fmt == "list":
+                # Return a list with all domain parameter sets
+                copy = deepcopy_or_clone(self._params_pert_list)
+                if dtype == "numpy":  # nothing to be done for torch
+                    for i in range(len(copy)):
+                        for k in copy[i].keys():
+                            copy[i][k] = copy[i][k].detach().numpy()
+
+            elif fmt == "dict":
+                # Returns a dict (as many entries as parameters) with lists as values (as many entries as samples)
+                copy = deepcopy_or_clone(self._params_pert_dict)
+                if dtype == "numpy":  # nothing to be done for torch
+                    for key in copy.keys():
+                        copy[key] = [samples.detach().numpy() for samples in copy[key]]
+
+        elif num_samples == 1 or (isinstance(self._params_pert_list, list) and len(self._params_pert_list) == 1):
+            # If only one sample is wanted or the internal list just contains 1 element
+            copy = deepcopy_or_clone(self._params_pert_list[0])
+            if dtype == "numpy":  # nothing to be done for torch
+                for k in copy.keys():
+                    copy[k] = copy[k].detach().numpy()
+            if fmt == "list":  # nothing to be done for dict
+                copy = [copy]
+
+        elif num_samples >= 1:
+            # Return a subset of all samples that the randomizer holds
+            if fmt == "list" and isinstance(self._params_pert_list, list):
+                copy = deepcopy_or_clone(self._params_pert_list[:num_samples])
+                # Return a list with the fist num_samples domain parameter sets
+                if dtype == "numpy":  # nothing to be done for torch
+                    for i in range(num_samples):
+                        for k in copy[i].keys():
+                            copy[i][k] = copy[i][k].detach().numpy()
+
+            elif fmt == "dict":
+                # Return a dict with as many keys as perturbed params and num_samples values for each of them
+                copy = dict()
+                for key in self._params_pert_dict:
+                    # Only select the fist num_samples elements of the list
+                    copy[key] = self._params_pert_dict[key][:num_samples]
+                    if dtype == "numpy":  # nothing to be done for torch
+                        copy[key] = [p.detach().numpy() for p in copy[key]]
+
+        if copy is None:
+            raise RuntimeError(f"Something when wrong during get_params({num_samples}, {fmt}, {dtype})!")
+
+        return copy
