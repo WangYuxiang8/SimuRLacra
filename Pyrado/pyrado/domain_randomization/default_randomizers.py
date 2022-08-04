@@ -29,17 +29,16 @@
 """
 Storage for default a.k.a. nominal domain parameter values and default randomizers
 """
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, List
 
 import numpy as np
 
 import pyrado
 from pyrado.domain_randomization.domain_parameter import BernoulliDomainParam, NormalDomainParam, UniformDomainParam
-from pyrado.domain_randomization.domain_randomizer import DomainRandomizer
+from pyrado.domain_randomization.domain_randomizer import DomainRandomizer, SBIRandomizer
 from pyrado.environment_wrappers.base import EnvWrapper
 from pyrado.environment_wrappers.utils import inner_env
 from pyrado.environments.sim_base import SimEnv
-
 
 DEFAULT_RANDOMIZER_REGISTRY = {}
 
@@ -66,6 +65,10 @@ def default_randomizer(env_module, env_class):
         return func
 
     return register
+
+
+def create_sbi_randomizer(ex_dir: str, params_name: List[str]) -> SBIRandomizer:
+    return SBIRandomizer(ex_dir, params_name)
 
 
 def create_default_randomizer(env: Union[SimEnv, EnvWrapper]) -> DomainRandomizer:

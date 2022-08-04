@@ -37,7 +37,7 @@ import pyrado
 from pyrado.algorithms.meta.udr import UDR
 from pyrado.algorithms.step_based.gae import GAE
 from pyrado.algorithms.step_based.ppo import PPO
-from pyrado.domain_randomization.default_randomizers import create_default_randomizer
+from pyrado.domain_randomization.default_randomizers import create_default_randomizer, create_sbi_randomizer
 from pyrado.environment_wrappers.action_normalization import ActNormWrapper
 from pyrado.environment_wrappers.domain_randomization import DomainRandWrapperLive
 from pyrado.environments.mujoco.openai_half_cheetah import HalfCheetahSim
@@ -57,6 +57,8 @@ if __name__ == "__main__":
 
     # Set seed if desired
     pyrado.set_seed(args.seed, verbose=True)
+    # 是否用sbi采样
+    is_sbi_randomize = True
 
     # Environment
     env_hparam = dict()
@@ -71,7 +73,12 @@ if __name__ == "__main__":
     )
     env = ActNormWrapper(env)
 
-    randomizer = create_default_randomizer(env)
+    params_name = ["reset_noise_halfspan", "total_mass", "tangential_friction_coeff",
+                   "torsional_friction_coeff", "rolling_friction_coeff"]
+    if is_sbi_randomize:
+        randomizer = create_sbi_randomizer(ex_dir, params_name)
+    else:
+        randomizer = create_default_randomizer(env)
     env = DomainRandWrapperLive(env, randomizer)
 
     # Policy

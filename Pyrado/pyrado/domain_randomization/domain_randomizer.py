@@ -284,7 +284,7 @@ class SBIRandomizer:
         self.x_o = pyrado.load(name="true_x.txt", load_dir=ex_dir)
         self.posterior = posterior.set_default_x(self.x_o)
         self.posterior.train()
-        self.params_name = params_name
+        self._params_name = params_name
         self._params_pert_dict = None  # dict of domain params which are a list of tensors with as may eles as samples
         self._params_pert_list = None  # list of domain param samples which are a dict with a key and one values
 
@@ -293,8 +293,8 @@ class SBIRandomizer:
         posterior_samples = np.array(samples)
 
         # Generate domain parameter samples
-        keys, values = self.params_name, []
-        for i in range(len(self.params_name)):
+        keys, values = self._params_name, []
+        for i in range(len(self._params_name)):
             values.append(posterior_samples[:, i])
 
         # Fill the internal storage containers
