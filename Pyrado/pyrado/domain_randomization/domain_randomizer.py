@@ -281,7 +281,7 @@ class SBIRandomizer:
     def __init__(self, ex_dir, params_name: list):
         posterior = pyrado.load(name="posterior.pt", load_dir=ex_dir)
         # TODO: 获取目标域的观测
-        self.x_o = pyrado.load(name="true_x.txt", load_dir=ex_dir)
+        self.x_o = pyrado.load(name="true_x.pt", load_dir=ex_dir)
         self.posterior = posterior.set_default_x(self.x_o)
         self.posterior.train()
         self._params_name = params_name

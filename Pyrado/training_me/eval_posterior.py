@@ -13,6 +13,48 @@ import time
 from pyrado.utils.sbi import create_embedding
 from pyrado.sampling.sbi_embeddings import LastStepEmbedding, BayesSimEmbedding
 from pyrado.sampling.sbi_rollout_sampler import SimRolloutSamplerForSBI, RolloutSamplerForSBI
+from pyrado.environments.mujoco.openai_half_cheetah import HalfCheetahSim
+from pyrado.logger.experiment import ask_for_experiment
+from pyrado.utils.argparser import get_argparser
+from pyrado.utils.experiments import load_experiment
+
+
+def get_mujoco_true_data(name: str):
+    parser = get_argparser()
+    args = parser.parse_args()
+    if name == "cth":
+        dp_mapping = {0: "reset_noise_halfspan", 1: "total_mass", 2: "tangential_friction_coeff",
+                      3: "torsional_friction_coeff",
+                      4: "rolling_friction_coeff"}
+        num_segments = 20
+        prior_min = [0., 10., 0., 0., 0.]
+        prior_max = [1, 20., 1., 1., 1.]
+        true_theta = torch.tensor([0., 14., 0.4, 0.1, 0.1])
+
+        env = HalfCheetahSim()  # 环境，基于gym接口
+        ex_dir = ask_for_experiment(hparam_list=args.show_hparams) if args.dir is None else args.dir
+        env_sim, policy, _ = load_experiment(ex_dir, args)
+
+        prior = sbiutils.BoxUniform(low=torch.as_tensor(prior_min), high=torch.as_tensor(prior_max))
+
+        # 定义embedding，用于将rollouts转化为固定的embedding。
+        embedding_hparam = dict(downsampling_factor=1)
+        embedding = create_embedding(BayesSimEmbedding.name, env.spec, **embedding_hparam)
+
+        # 创建基于sbi的模拟器和先验
+        rollout_sampler = SimRolloutSamplerForSBI(
+            env,
+            policy,
+            dp_mapping,
+            embedding,
+            num_segments=num_segments
+        )
+        simulator, prior = prepare_for_sbi(rollout_sampler, prior)
+
+        # 设置固定的params，传入模拟器，并输出一个观测
+        x_o = simulator(true_theta)
+
+        return true_theta, x_o
 
 
 def get_lunar_lander_true_data():
@@ -119,6 +161,8 @@ def get_true_data(env_name: str = "2dg"):
         return get_lunar_lander_true_data()
     elif env_name == "vessel":
         return get_vessel_true_data()
+    elif env_name in ["cth"]:
+        return get_mujoco_true_data(env_name)
 
 
 def eval_vi_posterior(ex_dir, file_name, sample_num, x_o):
@@ -152,6 +196,10 @@ def eval_rejection_posterior(ex_dir, file_name, sample_num, x_o):
 if __name__ == '__main__':
     ex_dir = "/training_me/lunar_lander"
     sample_num = 100000
-    _, x_o = get_true_data("lunar_lander")
-    eval_vi_posterior(ex_dir, f"snvi_posterior_2.pt", sample_num, x_o)
-    eval_rejection_posterior(ex_dir, f"rejection_posterior_2.pt", sample_num, x_o)
+    name = "cth"
+    _, x_o = get_true_data(name)
+    x_o_path = "/Users/joseph/workspace/SimuRLacra/Pyrado/posterior_data/" + name + "/true_x.pt"
+    print(x_o)
+    torch.save(x_o, x_o_path)
+    #eval_vi_posterior(ex_dir, f"snvi_posterior_2.pt", sample_num, x_o)
+    #eval_rejection_posterior(ex_dir, f"rejection_posterior_2.pt", sample_num, x_o)
